@@ -1,0 +1,82 @@
+---
+title: "Regressão Logística - Speed Dating"
+author: "Kleber Tarcísio Oliveira Santos"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r include=FALSE, warning=FALSE}
+library(GGally)
+library(pscl)
+library(broom)
+library(tidyverse)
+library(modelr)
+library(magrittr)
+library(dplyr)   
+
+theme_set(theme_bw())
+```
+
+
+```{r}
+dados <-
+  read_csv("speed-dating2.csv")
+```
+
+# Limpeza dos dados
+```{r}
+dados = dados %>%
+  filter(!is.na(attr), !is.na(fun), !is.na(intel), !is.na(sinc), !is.na(shar), !is.na(prob), !is.na(like)) %>%
+  mutate(dec = case_when(.$dec == "no" ~ 0, 
+                              .$dec == "yes" ~ 1))
+```
+```{r}
+skimr::skim(dados)
+```
+
+# Objetivo da análise:
+
+**Que fatores nos dados têm efeito relevante na chance do casal ter um match? Descreva se os efeitos são positivos ou negativos e sua magnitude.**
+
+# Regressão Logística Multivariada
+
+A variável DEC indica se houve match ou não entre dois participantes. Essa é a variável dependente do modelo proposto. O modelo de regressão logística multivariada é composto pelas seguintes variáveis:
+
+**attr : quão atraente p1 achou de p2**
+
+**sinc : quão sincero p1 achou de p2**
+
+**intel : quão inteligente p1 achou p2**
+
+**fun : quão divertido p1 achou de p2**
+
+**shar : quanto p1 pensa que compartilha interesses e hobbies com p2**
+
+**like : quanto p1 gostou de p2**
+
+**prob : qual probabilidade de p1 pensar que p2 quer se encontrar novamente com ele**
+
+```{r}
+dados.model <- glm(dec ~ attr + fun + intel + sinc + shar + like + prob, 
+          data = dados, 
+          family = "binomial")
+
+tidy(dados.model, conf.int = TRUE)
+```
+
+# Agora com Exponenciação
+
+```{r}
+tidy(dados.model, conf.int = TRUE, exponentiate = TRUE, conf.level = .95)
+```
+
+```{r}
+glance(dados.model)
+```
+
+```{r}
+pR2(dados.model)
+```
+
+<font size="5">Diante do exposto, percebe-se que dentre as variáveis existentes no presente estudo, o parâmetro like foi o que obteve o maior grau de significância [1.70902601, 2.0278971] - com exponenciação - e [0.53592363	0.70699934] - sem exponenciação - ambos com nível de confiança igual a 95%.</font> 
